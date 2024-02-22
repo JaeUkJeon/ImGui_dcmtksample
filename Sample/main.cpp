@@ -18,12 +18,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 
-#include "dcmtk/dcmdata/dctk.h"
-#include "dcmtk/dcmimgle/dcmimage.h"
-#include "dcmtk/dcmimgle/dipixel.h"
-#include "dcmtk/dcmimgle/diimage.h"
-#include "dcmtk/dcmimgle/dimo1img.h"
-#include "dcmtk/dcmimgle/dimo2img.h"
 
 #undef main
 // Main code
@@ -105,44 +99,7 @@ int main(int, char*)
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
 
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        {
-            ImGui::Text("DCM Load");
-            
-            static char buf[255] = "";
-            ImGui::InputText("path", buf, IM_ARRAYSIZE(buf));
 
-            static std::string strName, strID, strSex, strAge;
-
-
-            if (ImGui::Button("Load"))
-            {
-                if (std::filesystem::exists(buf))
-                {
-                    
-                    DcmFileFormat fileformat;
-                    auto status = fileformat.loadFile(buf);
-                    if (status.good())
-                    {
-                        fileformat.getDataset()->findAndGetOFString(DCM_PatientName, strName);
-                        fileformat.getDataset()->findAndGetOFString(DCM_PatientID, strID);
-                        fileformat.getDataset()->findAndGetOFString(DCM_PatientSex, strSex);
-                        fileformat.getDataset()->findAndGetOFString(DCM_PatientAge, strAge);
-
-                        strName = "PatientName: " + strName;
-                        strID = "PatientID: " + strID;
-                        strSex = "PatientSex: " + strSex;
-                        strAge = "PatientAge: " + strAge;
-                    }
-                }
-            }
-
-            ImGui::Text(strName.c_str());
-            ImGui::Text(strID.c_str());
-            ImGui::Text(strSex.c_str());
-            ImGui::Text(strAge.c_str());
-        }
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // Rendering
         ImGui::Render();
