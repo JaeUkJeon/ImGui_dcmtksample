@@ -112,8 +112,9 @@ int main(int, char*)
             static char buf[255] = "";
             ImGui::InputText("path", buf, IM_ARRAYSIZE(buf));
 
-            static std::string strName, strID, strSex, strAge;
-
+            static std::string strName, strID, strSex, strAge, strWindowWidth, strWindowCenter;
+            static unsigned long width, height;
+            static void* pixelData = nullptr;
 
             if (ImGui::Button("Load"))
             {
@@ -128,11 +129,23 @@ int main(int, char*)
                         fileformat.getDataset()->findAndGetOFString(DCM_PatientID, strID);
                         fileformat.getDataset()->findAndGetOFString(DCM_PatientSex, strSex);
                         fileformat.getDataset()->findAndGetOFString(DCM_PatientAge, strAge);
+                        fileformat.getDataset()->findAndGetOFString(DCM_WindowWidth, strWindowWidth);
+                        fileformat.getDataset()->findAndGetOFString(DCM_WindowCenter, strWindowCenter);
+
+                        DicomImage* image = new DicomImage(buf);
+                        width = image->getWidth();
+                        height = image->getHeight();
+
+                        image->setMinMaxWindow(0);
+                        pixelData = (Uint8*)(image->getOutputData(8));
 
                         strName = "PatientName: " + strName;
                         strID = "PatientID: " + strID;
                         strSex = "PatientSex: " + strSex;
                         strAge = "PatientAge: " + strAge;
+
+                        strWindowWidth = "WindowWidth: " + strWindowWidth;
+                        strWindowCenter = "WindowCenter: " + strWindowCenter;
                     }
                 }
             }
@@ -141,6 +154,29 @@ int main(int, char*)
             ImGui::Text(strID.c_str());
             ImGui::Text(strSex.c_str());
             ImGui::Text(strAge.c_str());
+            ImGui::Text(strWindowWidth.c_str());
+            ImGui::Text(strWindowCenter.c_str());
+
+            if (pixelData)
+            {
+                // Create a OpenGL texture identifier
+                GLuint image_texture;
+                glGenTextures(1, &image_texture);
+                glBindTexture(GL_TEXTURE_2D, image_texture);
+
+                // Setup filtering parameters for display
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
+
+                // Upload pixels into texture
+                glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, pixelData);
+                ImGui::Image((void*)image_texture, ImVec2(width, height));
+            }
+
+            
         }
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
